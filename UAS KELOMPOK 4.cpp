@@ -1,143 +1,199 @@
 #include <iostream>
-#include <vector>
+#include <limits>
 #include <string>
-#include <algorithm>
+using namespace std;
 
+// Struct for item information
 struct Barang {
-    int id;
-    std::string nama;
+    string namaBarang;
+    string kondisi;
     int jumlah;
-    double harga;
 };
 
-class Inventaris {
-private:
-    std::vector<Barang> daftarBarang;
-    int nextId = 1;
-
-public:
-    Inventaris() {
-        // Menambahkan beberapa barang saat inisialisasi
-        tambahBarang("Laptop", 10, 8000000);
-        tambahBarang("Smartphone", 20, 3000000);
-        tambahBarang("Tablet", 15, 4000000);
-        tambahBarang("Headphone", 30, 500000);
-        tambahBarang("Mouse", 50, 200000);
-    }
-
-    void tambahBarang(const std::string& nama, int jumlah, double harga) {
-        Barang barang = {nextId++, nama, jumlah, harga};
-        daftarBarang.push_back(barang);
-    }
-
-    void hapusBarang(int id) {
-        auto it = std::find_if(daftarBarang.begin(), daftarBarang.end(),
-                               [id](const Barang& b) { return b.id == id; });
-        if (it != daftarBarang.end()) {
-            daftarBarang.erase(it);
-            std::cout << "Barang berhasil dihapus.\n";
-        } else {
-            std::cout << "Barang tidak ditemukan.\n";
-        }
-    }
-
-    Barang* cariBarang(int id) {
-        auto it = std::find_if(daftarBarang.begin(), daftarBarang.end(),
-                               [id](const Barang& b) { return b.id == id; });
-        if (it != daftarBarang.end()) {
-            return &(*it);
-        }
-        return nullptr;
-    }
-
-    void updateBarang(int id, const std::string& nama, int jumlah, double harga) {
-        Barang* barang = cariBarang(id);
-        if (barang) {
-            barang->nama = nama;
-            barang->jumlah = jumlah;
-            barang->harga = harga;
-            std::cout << "Data barang berhasil diperbarui.\n";
-        } else {
-            std::cout << "Barang tidak ditemukan.\n";
-        }
-    }
-
-    void tampilkanBarang() {
-        if (daftarBarang.empty()) {
-            std::cout << "Inventaris kosong.\n";
-            return;
-        }
-        std::cout << "Daftar Barang:\n";
-        for (const auto& barang : daftarBarang) {
-            std::cout << "ID: " << barang.id << ", Nama: " << barang.nama
-                      << ", Jumlah: " << barang.jumlah << ", Harga: " << barang.harga << "\n";
-        }
-    }
+// Struct for login data
+struct Login {
+    string nama;
+    string nim;
 };
 
+// Struct to store inventory data
+struct Inventaris {
+    Barang barang;
+    Login login;
+};
+
+// Constant for array size
+const int maxArray = 50;
+
+// Declare array to store inventory data
+Inventaris daftarInventaris[maxArray];
+int totalBarang = 0, totalLogin = 0, pilihan;
+
+// Function prototypes
+int cariIndexBarang(const string& namaBarang);
+int login();
+void menu();
+void lihatBarang();
+void tambahBarang();
+void updateBarang();
+void hapusBarang();
+
+// Main function
 int main() {
-    Inventaris inventaris;
-    int pilihan;
-
-    do {
-        std::cout << "\nMenu:\n";
-        std::cout << "1. Hapus Barang\n";
-        std::cout << "2. Cari Barang\n";
-        std::cout << "3. Update Barang\n";
-        std::cout << "4. Tampilkan Semua Barang\n";
-        std::cout << "0. Keluar\n";
-        std::cout << "Pilihan Anda: ";
-        std::cin >> pilihan;
-
-        switch (pilihan) {
-            case 1: {
-                int id;
-                std::cout << "ID barang yang akan dihapus: ";
-                std::cin >> id;
-                inventaris.hapusBarang(id);
-                break;
-            }
-            case 2: {
-                int id;
-                std::cout << "ID barang yang dicari: ";
-                std::cin >> id;
-                Barang* barang = inventaris.cariBarang(id);
-                if (barang) {
-                    std::cout << "Barang ditemukan:\n";
-                    std::cout << "ID: " << barang->id << ", Nama: " << barang->nama
-                              << ", Jumlah: " << barang->jumlah << ", Harga: " << barang->harga << "\n";
-                } else {
-                    std::cout << "Barang tidak ditemukan.\n";
-                }
-                break;
-            }
-            case 3: {
-                int id;
-                std::string nama;
-                int jumlah;
-                double harga;
-                std::cout << "ID barang yang akan diupdate: ";
-                std::cin >> id;
-                std::cout << "Nama baru: ";
-                std::cin.ignore();
-                std::getline(std::cin, nama);
-                std::cout << "Jumlah baru: ";
-                std::cin >> jumlah;
-                std::cout << "Harga baru: ";
-                std::cin >> harga;
-                inventaris.updateBarang(id, nama, jumlah, harga);
-                break;
-            }
-            case 4:
-                inventaris.tampilkanBarang();
-                break;
-            case 0:
-                std::cout << "Terima kasih telah menggunakan sistem inventaris.\n";
-                break;
-            default:
-                std::cout << "Pilihan tidak valid.\n";
-        }
-    } while (pilihan != 0);
-
+    if (login()) {
+        menu();
+    }
     return 0;
 }
+
+// Function to display menu and perform CRUD operations
+void menu() {
+    do {
+        cout << "\n===== PILIHAN MENU =====\n";
+        cout << "1. Lihat Barang\n";
+        cout << "2. Tambah Barang\n";
+        cout << "3. Ubah Barang\n";
+        cout << "4. Hapus Barang\n";
+        cout << "5. Keluar\n";
+        cout << "Pilih menu: ";
+        cin >> pilihan;
+
+        // Validate input
+        while (cin.fail() || pilihan < 1 || pilihan > 5) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Input tidak valid. Masukkan angka antara 1 dan 5: ";
+            cin >> pilihan;
+        }
+
+        // Switch statement for menu options
+        switch (pilihan) {
+            case 1: lihatBarang(); break;
+            case 2: tambahBarang(); break;
+            case 3: updateBarang(); break;
+            case 4: hapusBarang(); break;
+            case 5: cout << "Terima Kasih.\n"; break;
+        }
+    } while (pilihan != 5);
+}
+
+// Function for login feature
+int login() {
+    while (totalLogin < 3) {
+        cout << "\n===== LOGIN =====\n";
+        cout << "Nama : ";
+        cin >> daftarInventaris[totalLogin].login.nama;
+        cout << "NIM : ";
+        cin >> daftarInventaris[totalLogin].login.nim;
+
+        if ((daftarInventaris[totalLogin].login.nama == "Frans" || daftarInventaris[totalLogin].login.nama == "frans") && daftarInventaris[totalLogin].login.nim == "20230801536") {
+            cout << "Login berhasil!\n";
+            cout << "\nSELAMAT DATANG DI INVENTORY SEKOLAH\n";
+            return 1;
+        } else {
+            cout << "Login gagal. Silakan coba lagi.\n";
+            totalLogin++;
+        }
+    }
+
+    if (totalLogin == 3) {
+        cout << "Anda telah melebihi batas percobaan login. Program berhenti.\n";
+        return 0;
+    }
+    return 0;
+}
+
+// Function to find item index by name
+int cariIndexBarang(const string& namaBarang) {
+    for (int i = 0; i < totalBarang; ++i) {
+        if (daftarInventaris[i].barang.namaBarang == namaBarang) {
+            return i;
+        }
+    }
+    return -1; // if item not found
+}
+
+// Procedure to display all items
+void lihatBarang() {
+    if (totalBarang > 0) {
+        cout << "\n===== DATA BARANG DI INVENTORI SEKOLAH ===== \n";
+        for (int i = 0; i < totalBarang; i++) {
+            cout << "Nama Barang : " << daftarInventaris[i].barang.namaBarang << " | Kondisi Barang : " << daftarInventaris[i].barang.kondisi << " | Jumlah Barang : " << daftarInventaris[i].barang.jumlah << endl;
+        }
+    } else {
+        cout << "\nBelum ada barang di inventory\n";
+    }
+}
+
+// Procedure to add new item
+void tambahBarang() {
+    if (totalBarang < maxArray) {
+        cout << "Masukkan nama barang : ";
+        cin.ignore();
+        getline(cin, daftarInventaris[totalBarang].barang.namaBarang);
+
+        cout << "Masukkan jumlah barang : ";
+        while (!(cin >> daftarInventaris[totalBarang].barang.jumlah)) {
+            cout << "Input tidak valid. Masukkan jumlah barang dalam bentuk angka : ";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+
+        cout << "Kondisi barang : ";
+        cin.ignore();
+        getline(cin, daftarInventaris[totalBarang].barang.kondisi);
+
+        totalBarang++;
+        cout << "Data barang berhasil ditambahkan.\n";
+    } else {
+        cout << "Penyimpanan penuh. Tidak dapat menambahkan data lagi.\n";
+    }
+}
+
+// Procedure to update item data
+void updateBarang() {
+    string update;
+    cout << "Masukkan nama barang yang akan diubah datanya : ";
+    cin.ignore();
+    getline(cin, update);
+
+    int index = cariIndexBarang(update);
+    if (index != -1) {
+        cout << "Masukkan nama barang yang baru : ";
+        getline(cin, daftarInventaris[index].barang.namaBarang);
+
+        cout << "Masukkan jumlah barang yang baru : ";
+        while (!(cin >> daftarInventaris[index].barang.jumlah)) {
+            cout << "Input tidak valid. Masukkan jumlah barang dalam bentuk angka : ";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+
+        cout << "Kondisi barang yang baru : ";
+        cin.ignore();
+        getline(cin, daftarInventaris[index].barang.kondisi);
+        cout << "Data barang berhasil diupdate.\n";
+    } else {
+        cout << "Nama barang tidak ditemukan.\n";
+    }
+}
+
+// Procedure to delete item data
+void hapusBarang() {
+    string update;
+    cout << "Masukkan nama barang yang akan dihapus datanya : ";
+    cin.ignore();
+    getline(cin, update);
+
+    int index = cariIndexBarang(update);
+    if (index != -1) {
+        for (int i = index; i < totalBarang - 1; ++i) {
+            daftarInventaris[i] = daftarInventaris[i + 1];
+        }
+        totalBarang--;
+        cout << "Data barang berhasil dihapus.\n";
+    } else {
+        cout << "Nama barang tidak ditemukan.\n";
+    }
+}
+
